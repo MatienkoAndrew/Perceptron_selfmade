@@ -13,11 +13,7 @@
 import pandas as pd
 import argparse
 from nn.preprocess_data import preprocess
-from nn.train_test_split import train_test_split
 from nn.nn_model import NeuralNetwork
-from nn.nn_model import ft_accuracy_score
-from nn.confusion_matrix import plotCf
-from sklearn.metrics import confusion_matrix
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -56,7 +52,7 @@ if __name__ == '__main__':
 		hidden_neurons1 = 20
 		hidden_neurons2 = 10
 
-	NN = NeuralNetwork(X_train.shape[1], hidden_neurons1, hidden_neurons2, 2, learning_rate=0.07, weights=weights)
+	NN = NeuralNetwork(X_train.shape[1], hidden_neurons1, hidden_neurons2, 2, learning_rate=0.1, weights=weights)
 	NN.fit(X_train, y_train, n_epochs=n_epochs, valid=(X_valid, y_valid))
 
 	pd.DataFrame(NN.weights).to_csv('weights.csv', index=False)

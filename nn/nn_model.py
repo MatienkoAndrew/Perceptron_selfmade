@@ -27,16 +27,31 @@ def ft_accuracy_score(y, y_pred):
     return summa / m
 
 class NeuralNetwork:
-    def __init__(self, hidden_neurons1, hidden_neurons2, out_neurons, learning_rate=0.1):
+    def __init__(self, inputs_neurons, hidden_neurons1, hidden_neurons2, out_neurons, learning_rate=0.1, weights=None):
+        self.inputs_neurons = inputs_neurons
         self.hidden_neurons1 = hidden_neurons1
         self.hidden_neurons2 = hidden_neurons2
         self.out_neurons = out_neurons
+        self.weights = weights
 
         self.param = {}
         self.cach = {}
         self.loss = []
         self.loss_valid = []
         self.lr = learning_rate
+
+        if self.weights is not None:
+            try:
+                self.param['W1'] = self.weights[0].reshape(hidden_neurons1, self.inputs_neurons)
+                self.param['b1'] = pd.DataFrame(self.weights[1]).dropna().values.reshape(-1, 1)
+                self.param['W2'] = pd.DataFrame(self.weights[2]).dropna().values.reshape(hidden_neurons2, hidden_neurons1)
+                self.param['b2'] = pd.DataFrame(self.weights[3]).dropna().values.reshape(-1, 1)
+                self.param['W3'] = pd.DataFrame(self.weights[4]).dropna().values.reshape(out_neurons, hidden_neurons2)
+                self.param['b3'] = pd.DataFrame(self.weights[5]).dropna().values.reshape(-1, 1)
+            except:
+                print("Use another architecture")
+                exit(1)
+
 
     def init_bias(self, n_neurons):
         b = np.zeros(n_neurons)
@@ -133,7 +148,9 @@ class NeuralNetwork:
             X_valid, y_valid = valid[0], valid[1]
             X_valid_for_accuracy = X_valid
             y_valid_for_accuracy = y_valid
-        self.init(m)
+
+        if self.weights is None:
+            self.init(m)
 
         X_for_accuracy = X
         y_for_accuracy = y
@@ -196,6 +213,21 @@ class NeuralNetwork:
         plt.legend()
         plt.grid(True)
         plt.show()
+
+        ##--save weights
+        w1 = self.param["W1"].reshape(1, -1)
+        b1 = self.param["b1"].reshape(1, -1)
+        w2 = self.param["W2"].reshape(1, -1)
+        b2 = self.param["b2"].reshape(1, -1)
+        w3 = self.param["W3"].reshape(1, -1)
+        b3 = self.param["b3"].reshape(1, -1)
+
+        self.weights = [w1.tolist()[0],
+                        b1.tolist()[0],
+                        w2.tolist()[0],
+                        b2.tolist()[0],
+                        w3.tolist()[0],
+                        b3.tolist()[0]]
 
         return
 

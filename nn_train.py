@@ -23,48 +23,44 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument("dataset", type=str, help="input dataset")
 	parser.add_argument('-e', '--epochs', nargs=1, type=int, help="Option epochs")
-	parser.add_argument('-p', '--predict', action="store_true", help="Predict")
-	parser.add_argument('-c', '--confusion', action="store_true", help="Confusion matrix")
+	parser.add_argument("-w", "--weights", nargs=1, type=str, help="input weights")
+	parser.add_argument("-a", "--architecture", nargs=2, type=int, help="input architecture")
 	args = parser.parse_args()
 
 	df = pd.read_csv(args.dataset, names=['1','target','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31','32'])
 	X, y = preprocess(df)
 
-	X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+	# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-	X_valid, y_valid = X_train[:50], y_train[:50]
-	X_train, y_train = X_train[50:], y_train[50:]
+	X_valid, y_valid = X[:50], y[:50]
+	X_train, y_train = X[50:], y[50:]
 
 	if args.epochs == None:
 		n_epochs = 2000
 	else:
 		n_epochs = args.epochs[0]
 
+	if args.weights == None:
+		weights = None
+	else:
+		if args.weights[0] != 'weights.csv':
+			print("Need file 'weights.csv'")
+			exit(1)
+		weights = pd.read_csv(args.weights[0])
+		weights = weights.values
 
-	NN = NeuralNetwork(20, 10, 2, 0.1)
+	if args.architecture != None:
+		hidden_neurons1 = args.architecture[0]
+		hidden_neurons2 = args.architecture[1]
+	else:
+		hidden_neurons1 = 20
+		hidden_neurons2 = 10
+
+	NN = NeuralNetwork(X_train.shape[1], hidden_neurons1, hidden_neurons2, 2, learning_rate=0.07, weights=weights)
 	NN.fit(X_train, y_train, n_epochs=n_epochs, valid=(X_valid, y_valid))
 
-	if args.predict:
-		##-- train data
-		y_pred_train = NN.predict(X_train, y_train)
+	pd.DataFrame(NN.weights).to_csv('weights.csv', index=False)
 
-		##-- test data
-		y_pred = NN.predict(X_test, y_test)
-
-		print("{}: {}".format("\nAccuracy (train)", ft_accuracy_score(y_train, y_pred_train)))
-		print("{}: {}".format("Accuracy (test)", ft_accuracy_score(y_test, y_pred)))
-
-		##-- confusion matrix (train)
-		cf_train = confusion_matrix(y_train, y_pred_train)
-		precision_train, recall_train = cf_train[1][1] / (cf_train[1][1] + cf_train[0][1]), \
-										cf_train[1][1] / (cf_train[1][1] + cf_train[0][0])
-
-		##-- confusion matrix (test)
-		cf_test = confusion_matrix(y_test, y_pred)
-		precision_test, recall_test = cf_test[1][1] / (cf_test[1][1] + cf_test[0][1]), \
-										cf_test[1][1] / (cf_test[1][1] + cf_test[0][0])
-		print("(Train) Precision: {}, Recall: {}".format(precision_train, recall_train))
-		print("(Test) Precision: {}, Recall: {}".format(precision_test, recall_test))
-
-		if args.confusion:
-			plotCf(y_test, y_pred, "Confusion matrix(test)")
+	if args.architecture != None:
+		pd.DataFrame(args.architecture).to_csv('arch.csv', index=False)
+	pass

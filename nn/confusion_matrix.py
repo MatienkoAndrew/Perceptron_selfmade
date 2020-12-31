@@ -23,7 +23,7 @@ def plotCf(a,b,t):
     plt.xlabel('Predicted')
     plt.ylabel('Actual')
     tick_marks = np.arange(len(set(a))) # length of classes
-    class_labels = ['0','1']
+    class_labels = ['B','M']
     plt.xticks(tick_marks,class_labels)
     plt.yticks(tick_marks,class_labels)
     thresh = cf.max() / 2.

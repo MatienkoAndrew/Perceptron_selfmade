@@ -12,7 +12,7 @@
 
 import numpy as np
 
-def train_test_split(X, y, test_size=0.3, shuffle=True, random_state=None):
+def train_test_split(X, y, test_size=0.3, shuffle=True, random_state=42):
 	np.random.seed(random_state)
 
 	n = X.shape[0]

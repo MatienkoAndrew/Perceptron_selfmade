@@ -69,6 +69,29 @@ class NeuralNetwork:
     def dsigmoid(self, Z):
         return Z * (1 - Z)
 
+    def Relu(self, Z):
+        return np.maximum(0, Z)
+
+    def dRelu2(self, dZ, Z):
+        dZ[Z <= 0] = 0
+        return dZ
+
+    def dRelu(self, x):
+        x[x <= 0] = 0
+        x[x > 0] = 1
+        return x
+
+    def softmax(self, Z):
+        shiftx = Z - np.max(Z, axis=1).reshape(-1, 1)
+        e = np.exp(shiftx)
+        s = np.sum(e, axis=1).reshape(-1, 1)
+        return e / s
+
+    def dsoftmax(self, Z):
+        p = self.cach['f3']
+        dA = (Z * p).sum(axis=1).reshape(-1, 1)
+        return p * (Z - dA)
+
     def init(self, m):
         self.param['W1'] = self.init_weights(m, self.hidden_neurons1)
         self.param['b1'] = self.init_bias(self.hidden_neurons1)
@@ -89,9 +112,9 @@ class NeuralNetwork:
         return V, F
 
     def forward(self, X, y, activation=None):
-        v1, f1 = self.feedforward(X, self.param['W1'], self.param['b1'], self.sigmoid)
-        v2, f2 = self.feedforward(f1, self.param['W2'], self.param['b2'], self.sigmoid)
-        v3, f3 = self.feedforward(f2, self.param['W3'], self.param['b3'], self.sigmoid)
+        v1, f1 = self.feedforward(X, self.param['W1'], self.param['b1'], self.Relu)
+        v2, f2 = self.feedforward(f1, self.param['W2'], self.param['b2'], self.Relu)
+        v3, f3 = self.feedforward(f2, self.param['W3'], self.param['b3'], self.softmax)
         y_pred = f3
 
         self.cach['v1'] = v1
@@ -108,17 +131,18 @@ class NeuralNetwork:
     def backpropagation(self, X, y, y_pred):
         derror = -(np.divide(y, y_pred) - np.divide(1 - y, 1 - y_pred))
 
-        local_grad1 = derror * self.dsigmoid(y_pred)
+        # local_grad1 = derror * self.dsigmoid(y_pred)
+        local_grad1 = self.dsoftmax(derror)
         grad_w3 = 1.0 / self.cach['f2'].shape[1] * np.dot(local_grad1, self.cach['f2'].T)
         grad_b3 = 1.0 / self.cach['f2'].shape[1] * np.dot(local_grad1, np.ones([local_grad1.shape[1], 1]))
         hidden_error1 = np.dot(self.param["W3"].T, local_grad1)
 
-        local_grad2 = hidden_error1 * self.dsigmoid(self.cach['f2'])
+        local_grad2 = hidden_error1 * self.dRelu(self.cach['f2'])
         grad_w2 = 1. / self.cach['f1'].shape[1] * np.dot(local_grad2, self.cach['f1'].T)
         grad_b2 = 1. / self.cach['f1'].shape[1] * np.dot(local_grad2, np.ones([local_grad2.shape[1], 1]))
         hidden_error2 = np.dot(self.param['W2'].T, local_grad2)
 
-        local_grad3 = hidden_error2 * self.dsigmoid(self.cach['f1'])
+        local_grad3 = hidden_error2 * self.dRelu(self.cach['f1'])
         grad_w1 = 1. / X.shape[1] * np.dot(local_grad3, X.T)
         grad_b1 = 1. / X.shape[1] * np.dot(local_grad3, np.ones([local_grad3.shape[1], 1]))
 
